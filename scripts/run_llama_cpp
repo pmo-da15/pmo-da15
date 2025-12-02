@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+import os
+
+# shift: -c 128 --context-shift --keep -1
+
+models = {
+    "qwen3-4b-instruct": {
+        "name": "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+        "quants": {
+            "q6": "Q6_K",
+        },
+        "params": "--temp 0.7 --top-k 20 --top-p 0.8 --min-p 0 --presence-penalty 1.5",
+    },
+    "qwen3-1.7b": {
+        "name": "Qwen/Qwen3-1.7B-GGUF",
+        "quants": {"q8": "Q8_0"},
+        "params": "--temp 0.6 --top-k 20 --top-p 0.95 --min-p 0 --presence-penalty 1.5",
+    },
+}
+
+epilog = "supported models: \n" + "\n".join(
+    " - " + key + ": " + ", ".join(models[key]["quants"].keys())
+    for key in sorted(models.keys())
+)
+
+parser = ArgumentParser(
+    prog="run_llama_cpp",
+    formatter_class=RawDescriptionHelpFormatter,
+    epilog=epilog,
+)
+parser.add_argument("model", type=str)
+parser.add_argument("quant", type=str)
+
+args = parser.parse_args()
+
+desc = models.get(args.model)
+if desc is None:
+    print("unknown model:", args.model)
+    print()
+    print(epilog)
+    exit(1)
+
+quant = desc["quants"].get(args.quant)
+if quant is None:
+    print("unknown quant:", args.quant)
+    print()
+    print(epilog)
+    exit(1)
+
+params = desc["params"].split()
+
+cmd = ["llama-server", "-hf", desc["name"] + ":" + quant, *params]
+os.execvp(cmd[0], cmd)

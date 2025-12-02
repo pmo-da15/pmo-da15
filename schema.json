@@ -1,0 +1,125 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": [
+        "criterions",
+        "recommendations"
+    ],
+    "properties": {
+        "criterions": {
+            "type": "object",
+            "required": [
+                "value_proposition_clarity",
+                "value_proposition_uniqueness",
+                "trust_strength",
+                "cta_strength",
+                "seo_friendliness",
+                "audience_fit"
+            ],
+            "properties": {
+                "value_proposition_clarity": {
+                    "type": "object",
+                    "required": [
+                        "score"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10
+                        },
+                        "comment": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "value_proposition_uniqueness": {
+                    "type": "object",
+                    "required": [
+                        "score"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10
+                        },
+                        "comment": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "trust_strength": {
+                    "type": "object",
+                    "required": [
+                        "score"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10
+                        },
+                        "comment": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "cta_strength": {
+                    "type": "object",
+                    "required": [
+                        "score"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10
+                        },
+                        "comment": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "seo_friendliness": {
+                    "type": "object",
+                    "required": [
+                        "score"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10
+                        },
+                        "comment": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "audience_fit": {
+                    "type": "object",
+                    "required": [
+                        "score"
+                    ],
+                    "properties": {
+                        "score": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10
+                        },
+                        "comment": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "recommendations": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}
