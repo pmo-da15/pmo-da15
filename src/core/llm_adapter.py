@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-JsonSchema = dict[str, Any]
-Json = Any
+from .misc import JsonSchema
 
-LlmAdapterExtraOutput = Any
 LlmMessages = list[dict[str, Any]]
 
 
@@ -13,11 +11,11 @@ class LlmAdapter(ABC):
     async def answer(
         self,
         messages: LlmMessages,
-    ) -> tuple[str, LlmAdapterExtraOutput]: ...
+    ) -> str: ...
 
     @abstractmethod
     async def answer_json(
         self,
         messages: LlmMessages,
         schema: JsonSchema,
-    ) -> tuple[Json, LlmAdapterExtraOutput]: ...
+    ) -> Any: ...

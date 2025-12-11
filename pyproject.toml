@@ -1,3 +1,5 @@
+tool.uv.package = true
+
 [project]
 name = "pmo-da15"
 version = "0.1.0"
@@ -8,11 +10,15 @@ dependencies = [
     "aiohttp>=3.13.2",
     "crawl4ai>=0.7.7",
     "pydantic>=2.12.4",
-    "nicegui>=3.3.1",
     "openai>=2.8.1",
+    "pillow>=12.0.0",
 ]
 
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
+    "matplotlib>=3.10.7",
 ]
+
+[project.scripts]
+cli = "cli:main"

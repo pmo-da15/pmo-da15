@@ -1,12 +1,18 @@
 import json
+
+from pydantic import BaseModel
 import aiohttp
 
-from src.llms.adapter import LlmAdapter
+from ..llm_adapter import LlmAdapter
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
 class OpenRouterLlm(LlmAdapter):
+    class Config(BaseModel):
+        model: str
+        api_key: str
+
     model: str
     api_key: str
 
@@ -29,7 +35,7 @@ class OpenRouterLlm(LlmAdapter):
     async def answer(self, messages):
         resp = await self._request({"messages": messages})
         resp_json = await resp.json()
-        return resp_json["choices"][0]["message"]["content"], resp
+        return resp_json["choices"][0]["message"]["content"]
 
     async def answer_json(self, messages, schema):
         resp = await self._request(
@@ -46,4 +52,4 @@ class OpenRouterLlm(LlmAdapter):
         out_str = resp_json["choices"][0]["message"]["content"]
         out_json = json.loads(out_str)
 
-        return out_json, resp
+        return out_json

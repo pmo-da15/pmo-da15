@@ -1,11 +1,10 @@
-from dataclasses import dataclass
 from enum import Enum
 
 from pydantic import BaseModel, TypeAdapter
 from tqdm import tqdm
 
-from src.misc import LineWindow, JSON_SCHEMA_URI, window_lines
-from src.llms.adapter import LlmAdapter
+from .misc import LineWindow, window_lines
+from .llm_adapter import LlmAdapter
 
 
 class ExtractionRole(str, Enum):
@@ -22,14 +21,17 @@ class Fragment(BaseModel):
     content: str
 
 
-EXTRACTION_ROLES_FULL_NAMES = [
-    (ExtractionRole.headline, "Main Headlines"),
-    (ExtractionRole.subheadline, "Subheadlines"),
-    (ExtractionRole.product_description, "Product Descriptions"),
-    (ExtractionRole.cta, "CTA"),
-    (ExtractionRole.social_proof, "Social Proofs"),
-    (ExtractionRole.key_section, "Key Sections"),
-]
+ExtractionOutput = TypeAdapter(list[Fragment])
+
+
+EXTRACTION_ROLES_FULL_NAMES = {
+    ExtractionRole.headline: "Main Headlines",
+    ExtractionRole.subheadline: "Subheadlines",
+    ExtractionRole.product_description: "Product Descriptions",
+    ExtractionRole.cta: "CTA",
+    ExtractionRole.social_proof: "Social Proofs",
+    ExtractionRole.key_section: "Key Sections",
+}
 
 EXTRACTION_INSTRUCT_PROMPT = f"""
 You are a system for extracting marketing-relevant information from the homepage of a B2B website.
@@ -105,7 +107,7 @@ Your MUST output JSON (which will be enforced during sampling), which MUST follo
 Each fragment consists of:
 - content: the cleaned (but otherwise unmodified) part of raw markdown.
 - role: one of the following:
-{"\n".join("  - " + name for _, name in EXTRACTION_ROLES_FULL_NAMES)}
+{"\n".join("  - " + name for _, name in EXTRACTION_ROLES_FULL_NAMES.items())}
 
 ADDITIONAL RULES
 Do NOT add anything that wasn't in the input.
@@ -114,14 +116,11 @@ Preserve meaning but fix broken structure.
 NO markdown formatting at all.
 """
 
-ExtractionOutput = TypeAdapter(list[Fragment])
-EXTRACTION_OUTPUT_SCHEMA = ExtractionOutput.json_schema()
-
 
 def compile_fragments(fragments: list[Fragment]) -> str:
     outputs = []
 
-    for role, full_name in zip(ExtractionRole, EXTRACTION_ROLES_FULL_NAMES):
+    for role, full_name in EXTRACTION_ROLES_FULL_NAMES.items():
         matching = [f for f in fragments if f.role == role]
         texts = [f.content for f in matching]
         outputs.append("# " + full_name + "\n" + "\n".join(texts))
@@ -137,12 +136,12 @@ async def extract_fragments_from_window(
         for lines in [win.previous, win.current, win.next]
     ]
 
-    frags, _ = await llm.answer_json(
+    frags = await llm.answer_json(
         [{"role": "system", "content": EXTRACTION_INSTRUCT_PROMPT}, *line_messages],
-        EXTRACTION_OUTPUT_SCHEMA,
+        ExtractionOutput.json_schema(),
     )
 
-    return [Fragment(f["role"], f["content"]) for f in frags]
+    return ExtractionOutput.validate_python(frags)
 
 
 async def extract_fragments_from_document(llm: LlmAdapter, doc: str) -> list[Fragment]:

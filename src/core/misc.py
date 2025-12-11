@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from typing import Any
 
 
-JSON_SCHEMA_URI = "https://json-schema.org/draft/2020-12/schema"
+JsonSchema = dict[str, Any]
 
 
 @dataclass

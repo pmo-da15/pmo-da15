@@ -1,60 +1,44 @@
-from typing import Literal
-from src.llms.adapter import LlmAdapter
-from src.misc import JSON_SCHEMA_URI
-from src.extraction import Fragment, compile_fragments
+from pydantic import BaseModel, Field
+
+from .llm_adapter import LlmAdapter
+from .extraction import Fragment, compile_fragments
 
 
-SUMMARIZATION_CRITERIONS = [
-    "value_proposition_clarity",
-    "value_proposition_uniqueness",
-    "trust_strength",
-    "cta_strength",
-    "seo_friendliness",
-    "audience_fit",
-]
+class SummarizationCriterion(BaseModel):
+    score: int = Field(..., ge=1, le=10)
+    comment: str
 
-SUMMARIZATION_OUTPUT_SCHEMA = {
-    "$schema": JSON_SCHEMA_URI,
-    "type": "object",
-    "required": ["criterions", "recommendations"],
-    "strict": True,
-    "additionalProperties": False,
-    "properties": {
-        "criterions": {
-            "type": "object",
-            "required": SUMMARIZATION_CRITERIONS,
-            "additionalProperties": False,
-            "properties": {
-                crit: {
-                    "type": "object",
-                    "required": ["score", "comment"],
-                    "properties": {
-                        "score": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 10,
-                        },
-                        "comment": {
-                            "type": "string",
-                        },
-                    },
-                }
-                for crit in SUMMARIZATION_CRITERIONS
-            },
-        },
-        "recommendations": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-    },
+
+class SummarizationCriterions(BaseModel):
+    value_proposition_clarity: SummarizationCriterion
+    value_proposition_uniqueness: SummarizationCriterion
+    trust_strength: SummarizationCriterion
+    cta_strength: SummarizationCriterion
+    seo_friendliness: SummarizationCriterion
+    audience_fit: SummarizationCriterion
+
+
+SUMMARIZATION_CRITERIONS_FULL_NAMES = {
+    "value_proposition_clarity": "Value Proposition Clarity",
+    "value_proposition_uniqueness": "Value Proposition Uniqueness",
+    "trust_strength": "Trust Strength",
+    "cta_strength": "CTA Strength",
+    "seo_friendliness": "SEO Friendliness",
+    "audience_fit": "Audience Fit",
 }
+
+
+class SummarizationOutput(BaseModel):
+    criterions: SummarizationCriterions
+    recommendations: list[str]
+
 
 _SUMMARIZATION_CRITERIONS_DESC = "\n".join(
     f"""        "{crit}": {{
             "score": <score>, // score 1-10
             "comment": "<comment>" // your comment & explanation
         }}"""
-    for crit in SUMMARIZATION_CRITERIONS
+    for crit in SummarizationCriterions.model_fields
 )
 
 SUMMARIZATION_INSTRUCT_PROMPT = f"""
@@ -124,6 +108,5 @@ async def summarize_fragments(llm: LlmAdapter, frags: list[Fragment]):
         {"role": "user", "content": input},
     ]
 
-    result, _ = await llm.answer_json(messages, SUMMARIZATION_OUTPUT_SCHEMA)
-
-    return result
+    out = await llm.answer_json(messages, SummarizationOutput.model_json_schema())
+    return SummarizationOutput.model_validate(out)
